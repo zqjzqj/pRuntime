@@ -125,13 +125,11 @@ func GetRunningPid() int {
 func HandleEndSignal(fn func()) {
 	sig := make(chan os.Signal)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-	for {
-		s := <-sig
-		log.Println(s)
-		_ = os.Remove(pidFile)
-		fn()
-		return
-	}
+	s := <-sig
+	log.Println(s)
+	_ = os.Remove(pidFile)
+	fn()
+	os.Exit(0)
 }
 
 func Stop() error {
