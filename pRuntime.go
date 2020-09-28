@@ -129,6 +129,7 @@ func HandleEndSignal(fn func()) {
 	log.Println(s)
 	_ = os.Remove(pidFile)
 	fn()
+	return
 }
 
 func Stop() error {
