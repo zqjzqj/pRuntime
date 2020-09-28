@@ -19,8 +19,11 @@ func SetPidFile(pFile string) {
 }
 
 func forkDaemon() (*exec.Cmd, error) {
+
+	pwd, _ := os.Getwd()
+	log.Println(pwd + ":" + os.Getenv("PATH"))
 	cmdRet := &exec.Cmd{
-		Path:         os.Args[0],
+		Path:         pwd + ":" + os.Getenv("PATH"),
 		Args:         os.Args,
 		Stdin:        os.Stdin,
 		Stdout:       os.Stdout,
