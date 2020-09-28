@@ -25,7 +25,7 @@ func forkDaemon() (*exec.Cmd, error) {
 		Stdin:        os.Stdin,
 		Stdout:       os.Stdout,
 		Stderr:       os.Stderr,
-		Env:[]string{"__Daemon=true"},
+		Env:append(os.Environ(), "__Daemon=true"),
 	}
 	err := cmdRet.Start()
 	if err != nil {
