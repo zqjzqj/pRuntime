@@ -79,6 +79,12 @@ func DaemonInit() {
 			log.Fatal("stop err : ", err)
 		}
 		log.Println("Daemon is stop....")
+	case "reload":
+		err := Reload()
+		if err != nil {
+			log.Fatal("reload err : ", err)
+		}
+		log.Println("Daemon reload success....")
 	}
 	os.Exit(0)
 }
@@ -125,11 +131,19 @@ func GetRunningPid() int {
 func HandleEndSignal(fn func()) {
 	sig := make(chan os.Signal)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-	s := <-sig
-	log.Println(s)
+	<-sig
 	_ = os.Remove(pidFile)
 	fn()
 	return
+}
+
+func HandleReloadSignal(fn func()) {
+	sig := make(chan os.Signal)
+	signal.Notify(sig, syscall.SIGHUP)
+	for {
+		<-sig
+		fn()
+	}
 }
 
 func Stop() error {
@@ -141,5 +155,16 @@ func Stop() error {
 		return err
 	}
 	return pro.Signal(syscall.SIGTERM)
+}
+
+func Reload() error {
+	if !CheckProIsRun() {
+		return errors.New("进程没有运行")
+	}
+	pro, err := os.FindProcess(GetRunningPid())
+	if err != nil {
+		return err
+	}
+	return pro.Signal(syscall.SIGHUP)
 }
 
