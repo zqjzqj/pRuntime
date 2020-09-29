@@ -1,9 +1,9 @@
 # 支持 start stop restart reload 4种信号
 
-#安装
+# 安装
     go get -u github.com/zqjzqj/pRuntime
 
-#使用
+# 使用
     //设置pid文件位置 默认 /tmp/pRuntime.pid 可以不设置
     pRuntime.SetPidFile("xxxxx")
     pRuntime.DaemonInit()
