@@ -1,4 +1,7 @@
 # 支持 start stop restart reload 4种信号
+
+    //设置pid文件位置 默认 /tmp/pRuntime.pid 可以不设置
+    pRuntime.SetPidFile("xxxxx")
     pRuntime.DaemonInit()
     
     //程序stop时的处理方法
