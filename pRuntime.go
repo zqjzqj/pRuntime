@@ -3,13 +3,13 @@ package pRuntime
 import (
 	"errors"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"syscall"
-	"log"
-	"runtime"
 )
 
 var pidFile = "/tmp/pRuntime.pid"
@@ -18,21 +18,23 @@ func SetPidFile(pFile string) {
 	pidFile = pFile
 }
 
-func forkDaemon() (*exec.Cmd, error) {
+func forkDaemon(isWritePidFile bool, environ ...string) (*exec.Cmd, error) {
 	cmdRet := &exec.Cmd{
 		Path:         os.Args[0],
 		Args:         os.Args,
 		Stdin:        os.Stdin,
 		Stdout:       os.Stdout,
 		Stderr:       os.Stderr,
-		Env:append(os.Environ(), "__Daemon=true"),
+		Env:append(os.Environ(), environ...),
 	}
 	err := cmdRet.Start()
 	if err != nil {
 		return nil, err
 	}
 	//写入pid
-	err = ioutil.WriteFile(pidFile, []byte(strconv.Itoa(cmdRet.Process.Pid)), 0666)
+	if isWritePidFile {
+		err = ioutil.WriteFile(pidFile, []byte(strconv.Itoa(cmdRet.Process.Pid)), 0666)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -40,11 +42,9 @@ func forkDaemon() (*exec.Cmd, error) {
 }
 
 func DaemonInit() {
-
 	if runtime.GOOS == "windows" {
 		return
 	}
-
 	if os.Getenv("__Daemon") == "true" {
 		return
 	}
@@ -57,7 +57,7 @@ func DaemonInit() {
 		if CheckProIsRun() {
 			log.Fatal("当前进程已运行...")
 		}
-		cmdRet, err := forkDaemon()
+		cmdRet, err := forkDaemon(true, "__Daemon=true")
 		if err != nil {
 			log.Fatal("start err : ",err)
 		}
@@ -68,7 +68,7 @@ func DaemonInit() {
 			log.Fatal("restart stop err : ", err)
 		}
 		os.Args = os.Args[:len(os.Args) - 1]
-		cmdRet, err := forkDaemon()
+		cmdRet, err := forkDaemon(true, "__Daemon=true")
 		if err != nil {
 			log.Fatal("forkDaemon err : ", err)
 		}
