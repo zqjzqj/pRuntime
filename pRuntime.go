@@ -42,11 +42,12 @@ func forkDaemon(isWritePidFile bool, environ ...string) (*exec.Cmd, error) {
 	return cmdRet, nil
 }
 
-func DaemonInit() {
+//后台模式运行
+func RunBackground() {
 	if runtime.GOOS == "windows" {
 		return
 	}
-	if os.Getenv("__Daemon") == "true" {
+	if os.Getenv("__Background") == "true" {
 		return
 	}
 	c := "start"
@@ -58,7 +59,7 @@ func DaemonInit() {
 		if CheckProIsRun() {
 			log.Fatal("当前进程已运行...")
 		}
-		cmdRet, err := forkDaemon(true, "__Daemon=true")
+		cmdRet, err := forkDaemon(true, "__Background=true")
 		if err != nil {
 			log.Fatal("start err : ", err)
 		}
@@ -69,7 +70,7 @@ func DaemonInit() {
 			log.Fatal("restart stop err : ", err)
 		}
 		os.Args = os.Args[:len(os.Args)-1]
-		cmdRet, err := forkDaemon(true, "__Daemon=true")
+		cmdRet, err := forkDaemon(true, "__Background=true")
 		if err != nil {
 			log.Fatal("forkDaemon err : ", err)
 		}
@@ -90,8 +91,8 @@ func DaemonInit() {
 	os.Exit(0)
 }
 
-//已子进程模式运行
-func RunChildProcess(handleEndSignal bool) error {
+//以子守护进程模式运行
+func RunDaemon(handleEndSignal bool) error {
 	proc, err := NewProc()
 	if err != nil {
 		return errors.New("RunChildProcess fail........")
@@ -117,7 +118,7 @@ func RunChildProcess(handleEndSignal bool) error {
 	if err != nil {
 		return errors.New("process wait err........")
 	}
-	return RunChildProcess(false)
+	return RunDaemon(false)
 }
 
 func CheckProIsRun() bool {
