@@ -91,7 +91,7 @@ func DaemonInit() {
 }
 
 //已子进程模式运行
-func RunChildProcess() error {
+func RunChildProcess(handleEndSignal bool) error {
 	proc, err := NewProc()
 	if err != nil {
 		return errors.New("RunChildProcess fail........")
@@ -101,21 +101,23 @@ func RunChildProcess() error {
 		return nil
 	}
 	//监听主进程信号 当主进程退出时 exit
-	go func() {
-		HandleEndSignal(func() {
-			if err = proc.Kill(); err != nil {
-				fmt.Println(err)
-			}
-			fmt.Println("main process exit....")
-			os.Exit(0)
-		})
-	}()
+	if handleEndSignal {
+		go func() {
+			HandleEndSignal(func() {
+				if err = proc.Kill(); err != nil {
+					fmt.Println(err)
+				}
+				fmt.Println("main process exit....")
+				os.Exit(0)
+			})
+		}()
+	}
 	//等待子进程退出后 重启
 	err = proc.Wait()
 	if err != nil {
 		return errors.New("process wait err........")
 	}
-	return RunChildProcess()
+	return RunChildProcess(false)
 }
 
 func CheckProIsRun() bool {
