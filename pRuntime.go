@@ -2,6 +2,7 @@ package pRuntime
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -20,12 +21,12 @@ func SetPidFile(pFile string) {
 
 func forkDaemon(isWritePidFile bool, environ ...string) (*exec.Cmd, error) {
 	cmdRet := &exec.Cmd{
-		Path:         os.Args[0],
-		Args:         os.Args,
-		Stdin:        os.Stdin,
-		Stdout:       os.Stdout,
-		Stderr:       os.Stderr,
-		Env:append(os.Environ(), environ...),
+		Path:   os.Args[0],
+		Args:   os.Args,
+		Stdin:  os.Stdin,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+		Env:    append(os.Environ(), environ...),
 	}
 	err := cmdRet.Start()
 	if err != nil {
@@ -50,7 +51,7 @@ func DaemonInit() {
 	}
 	c := "start"
 	if l := len(os.Args); l > 1 {
-		c = os.Args[l - 1]
+		c = os.Args[l-1]
 	}
 	switch c {
 	case "start":
@@ -59,7 +60,7 @@ func DaemonInit() {
 		}
 		cmdRet, err := forkDaemon(true, "__Daemon=true")
 		if err != nil {
-			log.Fatal("start err : ",err)
+			log.Fatal("start err : ", err)
 		}
 		log.Println("Daemon is run... pid: ", cmdRet.Process.Pid)
 	case "restart":
@@ -67,7 +68,7 @@ func DaemonInit() {
 		if err != nil {
 			log.Fatal("restart stop err : ", err)
 		}
-		os.Args = os.Args[:len(os.Args) - 1]
+		os.Args = os.Args[:len(os.Args)-1]
 		cmdRet, err := forkDaemon(true, "__Daemon=true")
 		if err != nil {
 			log.Fatal("forkDaemon err : ", err)
@@ -89,6 +90,30 @@ func DaemonInit() {
 	os.Exit(0)
 }
 
+//已子进程模式运行
+func RunChildProcess() error {
+	proc, err := NewProc()
+	if err != nil {
+		return errors.New("RunChildProcess fail........")
+	}
+	//监听主进程信号 当主进程退出时 exit
+	go func() {
+		HandleEndSignal(func() {
+			if err = proc.Kill(); err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println("main process exit....")
+			os.Exit(0)
+		})
+	}()
+	//等待子进程退出后 重启
+	err = proc.Wait()
+	if err != nil {
+		return errors.New("process wait err........")
+	}
+	return RunChildProcess()
+}
+
 func CheckProIsRun() bool {
 	if GetRunningPid() == 0 {
 		return false
@@ -97,7 +122,7 @@ func CheckProIsRun() bool {
 }
 
 func FileExists(path string) bool {
-	_, err := os.Stat(path)    //os.Stat获取文件信息
+	_, err := os.Stat(path) //os.Stat获取文件信息
 	if err != nil {
 		if os.IsExist(err) {
 			return true
@@ -167,4 +192,3 @@ func Reload() error {
 	}
 	return pro.Signal(syscall.SIGHUP)
 }
-
