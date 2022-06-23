@@ -96,6 +96,10 @@ func RunChildProcess() error {
 	if err != nil {
 		return errors.New("RunChildProcess fail........")
 	}
+	//这里如果proc为空 表示已经是子进程了
+	if proc == nil {
+		return nil
+	}
 	//监听主进程信号 当主进程退出时 exit
 	go func() {
 		HandleEndSignal(func() {
