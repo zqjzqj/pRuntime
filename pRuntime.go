@@ -42,7 +42,7 @@ func forkDaemon(isWritePidFile bool, environ ...string) (*exec.Cmd, error) {
 	return cmdRet, nil
 }
 
-//后台模式运行
+// 后台模式运行
 func RunBackground() {
 	if runtime.GOOS == "windows" {
 		return
@@ -91,7 +91,7 @@ func RunBackground() {
 	os.Exit(0)
 }
 
-//以子守护进程模式运行
+// 以子守护进程模式运行
 func RunDaemon(handleEndSignal bool) error {
 	proc, err := NewProc()
 	if err != nil {
@@ -103,15 +103,13 @@ func RunDaemon(handleEndSignal bool) error {
 	}
 	//监听主进程信号 当主进程退出时 exit
 	if handleEndSignal {
-		go func() {
-			HandleEndSignal(func() {
-				if err = proc.Kill(); err != nil {
-					fmt.Println(err)
-				}
-				fmt.Println("main process exit....")
-				os.Exit(0)
-			})
-		}()
+		HandleEndSignal(func() {
+			if err = proc.Kill(); err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println("main process exit....")
+			os.Exit(0)
+		})
 	}
 	//等待子进程退出后 重启
 	err = proc.Wait()
@@ -161,21 +159,25 @@ func GetRunningPid() int {
 }
 
 func HandleEndSignal(fn func()) {
-	sig := make(chan os.Signal)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-	<-sig
-	_ = os.Remove(pidFile)
-	fn()
+	go func() {
+		sig := make(chan os.Signal)
+		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+		<-sig
+		_ = os.Remove(pidFile)
+		fn()
+	}()
 	return
 }
 
 func HandleReloadSignal(fn func()) {
-	sig := make(chan os.Signal)
-	signal.Notify(sig, syscall.SIGHUP)
-	for {
-		<-sig
-		fn()
-	}
+	go func() {
+		sig := make(chan os.Signal)
+		signal.Notify(sig, syscall.SIGHUP)
+		for {
+			<-sig
+			fn()
+		}
+	}()
 }
 
 func Stop() error {
