@@ -166,7 +166,7 @@ func HandleEndSignal(fn func()) chan struct{} {
 		<-sig
 		_ = os.Remove(pidFile)
 		fn()
-		<-chanHandEnd
+		chanHandEnd <- struct{}{}
 	}()
 	return chanHandEnd
 }

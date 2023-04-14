@@ -9,7 +9,7 @@
     pRuntime.RunDaemon(true)
     
     //程序stop时的处理方法
-    pRuntime.HandleEndSignal(func() {
+    end := pRuntime.HandleEndSignal(func() {
 		log.Println("END.....")
 	})
 	
@@ -17,3 +17,6 @@
     pRuntime.HandleReloadSignal(func() {
         log.Println("Reload....")
     })
+
+    //等待方法执行完毕
+    <-end
