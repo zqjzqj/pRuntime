@@ -92,7 +92,7 @@ func RunBackground() {
 }
 
 // 以子守护进程模式运行
-func RunDaemon(handleEndSignal bool) error {
+func RunDaemon(isHandleEndSignal bool) error {
 	proc, err := NewProc()
 	if err != nil {
 		return errors.New("RunChildProcess fail........")
@@ -102,7 +102,7 @@ func RunDaemon(handleEndSignal bool) error {
 		return nil
 	}
 	//监听主进程信号 当主进程退出时 exit
-	if handleEndSignal {
+	if isHandleEndSignal {
 		HandleEndSignal(func() {
 			if err = proc.Kill(); err != nil {
 				fmt.Println(err)
@@ -158,15 +158,17 @@ func GetRunningPid() int {
 	return 0
 }
 
-func HandleEndSignal(fn func()) {
+func HandleEndSignal(fn func()) chan struct{} {
+	chanHandEnd := make(chan struct{}, 1)
 	go func() {
 		sig := make(chan os.Signal)
 		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 		<-sig
 		_ = os.Remove(pidFile)
 		fn()
+		<-chanHandEnd
 	}()
-	return
+	return chanHandEnd
 }
 
 func HandleReloadSignal(fn func()) {
