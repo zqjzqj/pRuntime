@@ -162,7 +162,7 @@ func HandleEndSignal(fn func()) chan struct{} {
 	chanHandEnd := make(chan struct{}, 1)
 	go func() {
 		sig := make(chan os.Signal)
-		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 		<-sig
 		_ = os.Remove(pidFile)
 		fn()
