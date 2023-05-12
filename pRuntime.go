@@ -104,8 +104,14 @@ func RunDaemon(isHandleEndSignal bool) error {
 	//监听主进程信号 当主进程退出时 exit
 	if isHandleEndSignal {
 		HandleEndSignal(func() {
-			if err = proc.Kill(); err != nil {
+			if err = proc.proc.Signal(syscall.SIGTERM); err != nil {
 				fmt.Println(err)
+			}
+			err = proc.Wait()
+			if err != nil {
+				fmt.Println("process wait err........", err)
+			} else {
+				fmt.Println("process wait ok........")
 			}
 			fmt.Println("main process exit....")
 			os.Exit(0)
