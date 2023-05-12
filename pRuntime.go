@@ -120,7 +120,7 @@ func RunDaemon(isHandleEndSignal bool) error {
 	//等待子进程退出后 重启
 	err = proc.Wait()
 	if err != nil {
-		return errors.New("process wait err........")
+		return errors.Join(errors.New("process wait err........"), err)
 	}
 	return RunDaemon(false)
 }
